@@ -1,122 +1,88 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+
+
+// FastAPIから受け取る従業員データの型
+type Employee = {
+  employee_id: number;
+  name: string;
+  ur_name: string;
+};
+
 
 function App() {
-  const [count, setCount] = useState(0)
+  // 取得した従業員一覧を保存する
+  const [employees, setEmployees] = useState<Employee[]>([]);
+
+  // データを取得中かどうかを保存する
+  const [isLoading, setIsLoading] = useState(true);
+
+  // エラーメッセージを保存する
+  const [error, setError] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    // FastAPIから従業員一覧を取得する関数
+    const fetchEmployees = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:8000/api/employees"
+        );
+
+        // HTTPステータスが200番台以外ならエラーにする
+        if (!response.ok) {
+          throw new Error("従業員情報の取得に失敗しました");
+        }
+
+        // JSONをJavaScriptの配列へ変換する
+        const data: Employee[] = await response.json();
+
+        // 取得した従業員一覧をstateに保存する
+        setEmployees(data);
+      } catch (err) {
+        // エラー内容を画面表示用のstateに保存する
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("予期しないエラーが発生しました");
+        }
+      } finally {
+        // 成功・失敗にかかわらず、読み込み状態を終了する
+        setIsLoading(false);
+      }
+    };
+
+    // 従業員データの取得を開始する
+    fetchEmployees();
+  }, []);
+
+
+  // データ取得中に表示する内容
+  if (isLoading) {
+    return <p>従業員情報を読み込み中です...</p>;
+  }
+
+  // エラー発生時に表示する内容
+  if (error) {
+    return <p>エラー：{error}</p>;
+  }
+
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <main>
+      <h1>従業員一覧</h1>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <ul>
+        {employees.map((employee) => (
+          <li key={employee.employee_id}>
+            社員ID：{employee.employee_id}、
+            名前：{employee.name}、
+            UR名：{employee.ur_name}
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
 }
 
-export default App
+
+export default App;

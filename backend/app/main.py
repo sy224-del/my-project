@@ -1,51 +1,14 @@
-# FastAPIの本体をインポート
-# APIアプリケーションを作成するために使用する
 from fastapi import FastAPI
-
-# CORSを設定するためのミドルウェアをインポート
-# Reactなど、異なるオリジンからAPIへアクセスできるようにする
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 
-# FastAPIアプリケーションを作成
-# このappにURLや処理を登録していく
 app = FastAPI()
 
-
-# CORSの設定
-# ReactとFastAPIは開発中に異なるポートで動くため、この設定が必要
-#
-# React:   http://localhost:5173
-# FastAPI: http://localhost:8000
-app.add_middleware(
-    CORSMiddleware,
-
-    # FastAPIへのアクセスを許可するフロントエンドのURL
-    # 指定していないURLからのアクセスはブラウザによって制限される
-    allow_origins=["http://localhost:5173"],
-
-    # CookieやAuthorizationヘッダーなどの認証情報を
-    # フロントエンドから送信できるようにする
-    allow_credentials=True,
-
-    # 許可するHTTPメソッド
-    # "*"はGET、POST、PUT、DELETEなど、すべてを許可する
-    allow_methods=["*"],
-
-    # フロントエンドから送信されるすべてのHTTPヘッダーを許可する
-    allow_headers=["*"],
-)
-
-
-# GETリクエストを受け付けるAPI
-# URL: http://localhost:8000/api/health
-#
-# サーバーが正常に動作しているか確認するためのAPI
+# 動作確認用API
 @app.get("/api/health")
 def health_check():
-    # Pythonの辞書は自動的にJSONへ変換される
     return {"status": "ok"}
-
 
 # Reactへメッセージを返すGET API
 # URL: http://localhost:8000/api/message
@@ -56,3 +19,30 @@ def get_message():
     #   "message": "FastAPIからこんにちは"
     # }
     return {"message": "FastAPIからこんにちは"}
+
+# 従業員1人分のデータ形式
+class Employee(BaseModel):
+    employee_id: int
+    name: str
+    ur_name: str
+
+# 従業員一覧をJSON形式で返すAPI
+@app.get("/api/employees", response_model=list[Employee])
+def get_employees():
+    return [
+        {
+            "employee_id": 1,
+            "name": "岡田 秀弥",
+            "ur_name": "okada_shuya",
+        },
+        {
+            "employee_id": 2,
+            "name": "山田 太郎",
+            "ur_name": "yamada_taro",
+        },
+        {
+            "employee_id": 3,
+            "name": "佐藤 花子",
+            "ur_name": "sato_hanako",
+        },
+    ]
