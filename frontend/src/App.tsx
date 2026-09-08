@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
+import {
+  BrowserRouter,
+  Link,
+  Route,
+  Routes,
+  useParams,
+} from "react-router";
 
 
-// FastAPIから受け取る従業員データの型
+// FastAPIから受け取る社員データの型
 type Employee = {
   employee_id: number;
   name: string;
@@ -9,59 +16,43 @@ type Employee = {
 };
 
 
-function App() {
-  // 取得した従業員一覧を保存する
+// 社員一覧画面
+function EmployeeList() {
   const [employees, setEmployees] = useState<Employee[]>([]);
-
-  // データを取得中かどうかを保存する
   const [isLoading, setIsLoading] = useState(true);
-
-  // エラーメッセージを保存する
   const [error, setError] = useState<string | null>(null);
 
 
   useEffect(() => {
-    // FastAPIから従業員一覧を取得する関数
     const fetchEmployees = async () => {
       try {
         const response = await fetch(
           "http://localhost:8000/api/employees"
         );
 
-        // HTTPステータスが200番台以外ならエラーにする
         if (!response.ok) {
           throw new Error("従業員情報の取得に失敗しました");
         }
 
-        // JSONをJavaScriptの配列へ変換する
         const data: Employee[] = await response.json();
-
-        // 取得した従業員一覧をstateに保存する
         setEmployees(data);
       } catch (err) {
-        // エラー内容を画面表示用のstateに保存する
         if (err instanceof Error) {
           setError(err.message);
-        } else {
-          setError("予期しないエラーが発生しました");
         }
       } finally {
-        // 成功・失敗にかかわらず、読み込み状態を終了する
         setIsLoading(false);
       }
     };
 
-    // 従業員データの取得を開始する
     fetchEmployees();
   }, []);
 
 
-  // データ取得中に表示する内容
   if (isLoading) {
     return <p>従業員情報を読み込み中です...</p>;
   }
 
-  // エラー発生時に表示する内容
   if (error) {
     return <p>エラー：{error}</p>;
   }
@@ -76,11 +67,96 @@ function App() {
           <li key={employee.employee_id}>
             社員ID：{employee.employee_id}、
             名前：{employee.name}、
-            UR名：{employee.ur_name}
+            UR名：
+            <Link to={`/employees/${employee.employee_id}`}>
+              {employee.ur_name}
+            </Link>
           </li>
         ))}
       </ul>
     </main>
+  );
+}
+
+
+// 社員詳細画面
+function EmployeeDetail() {
+  // URLの「:employeeId」に入った値を取得する
+  const { employeeId } = useParams();
+
+  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    const fetchEmployee = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8000/api/employees/${employeeId}`
+        );
+
+        if (!response.ok) {
+          throw new Error("社員情報の取得に失敗しました");
+        }
+
+        const data: Employee = await response.json();
+        setEmployee(data);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEmployee();
+  }, [employeeId]);
+
+
+  if (isLoading) {
+    return <p>社員情報を読み込み中です...</p>;
+  }
+
+  if (error) {
+    return <p>エラー：{error}</p>;
+  }
+
+  if (employee === null) {
+    return <p>社員が見つかりません。</p>;
+  }
+
+
+  return (
+    <main>
+      <h1>社員詳細</h1>
+
+      <p>社員ID：{employee.employee_id}</p>
+      <p>名前：{employee.name}</p>
+      <p>UR名：{employee.ur_name}</p>
+
+      <Link to="/">社員一覧へ戻る</Link>
+    </main>
+  );
+}
+
+
+// URLと表示する画面の対応を設定
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* http://localhost:5173/ */}
+        <Route path="/" element={<EmployeeList />} />
+
+        {/* http://localhost:5173/employees/1 */}
+        <Route
+          path="/employees/:employeeId"
+          element={<EmployeeDetail />}
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
