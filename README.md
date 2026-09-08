@@ -1,43 +1,103 @@
 # my-project
 
-FastAPIのバックエンドと、Vite + React + TypeScriptのフロントエンドで構成された学習用プロジェクトです。
+FastAPIのバックエンドと、Vite + React + TypeScriptのフロントエンドで作成した社員情報表示アプリです。
 
-## 構成
+バックエンドが社員データをAPIとして返し、フロントエンドがそのデータを取得して社員一覧画面と社員詳細画面を表示します。
+
+## 現在の設計
 
 ```text
 .
-├── backend/   # FastAPI APIサーバー
-└── frontend/  # Vite + React フロントエンド
+├── backend/
+│   ├── app/
+│   │   └── main.py          # FastAPIアプリケーション
+│   ├── tests/
+│   │   └── small/           # 小規模テスト
+│   ├── pyproject.toml       # Python依存関係
+│   └── pytest.ini           # pytest設定
+└── frontend/
+    ├── src/
+    │   ├── App.tsx          # 画面とルーティング
+    │   └── main.tsx         # Reactの起動処理
+    ├── package.json         # npmスクリプトと依存関係
+    └── vite.config.ts       # Vite設定
 ```
 
-## 必要なもの
+## 使用技術
+
+### Backend
 
 - Python 3.10以上
+- FastAPI
+- Pydantic
+- pytest
+
+### Frontend
+
 - Node.js
 - npm
+- Vite
+- React
+- TypeScript
+- React Router
 
-## セットアップ
+## 画面構成
 
-### バックエンド
+| URL | 内容 |
+| --- | --- |
+| `http://localhost:5173/` | 社員一覧画面 |
+| `http://localhost:5173/employees/:employeeId` | 社員詳細画面 |
+
+## API設計
+
+バックエンドは `http://localhost:8000` で起動します。
+
+| メソッド | パス | 内容 |
+| --- | --- | --- |
+| GET | `/api/health` | サーバーの動作確認 |
+| GET | `/api/message` | 確認用メッセージを返す |
+| GET | `/api/employees` | 社員一覧を返す |
+| GET | `/api/employees/{employee_id}` | 指定した社員IDの社員情報を返す |
+
+社員データの形式は以下です。
+
+```json
+{
+  "employee_id": 1,
+  "name": "岡田 秀弥",
+  "ur_name": "okada_shuya"
+}
+```
+
+## 構築手順
+
+### 1. リポジトリを取得
+
+```bash
+git clone https://github.com/sy224-del/mytool.git
+cd mytool
+```
+
+すでにこのフォルダで作業している場合は、上記の取得手順は不要です。
+
+### 2. Backendのセットアップ
 
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 python -m pip install -e .
 python -m pip install pytest
 ```
 
-### フロントエンド
+Windowsの場合、仮想環境の有効化は以下です。
 
 ```bash
-cd frontend
-npm install
+.venv\Scripts\activate
 ```
 
-## 開発サーバーの起動
-
-### バックエンド
+### 3. Backendの起動
 
 ```bash
 cd backend
@@ -45,31 +105,53 @@ source .venv/bin/activate
 fastapi dev app/main.py
 ```
 
-バックエンドは http://localhost:8000 で起動します。
+起動後、以下にアクセスして動作確認できます。
 
-### フロントエンド
+```text
+http://localhost:8000/api/health
+```
 
-別のターミナルで起動します。
+期待されるレスポンスです。
+
+```json
+{
+  "status": "ok"
+}
+```
+
+### 4. Frontendのセットアップ
+
+別のターミナルを開いて実行します。
+
+```bash
+cd frontend
+npm install
+```
+
+### 5. Frontendの起動
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-フロントエンドは通常 http://localhost:5173 で起動します。
+起動後、以下にアクセスします。
 
-## API
+```text
+http://localhost:5173/
+```
 
-現在のAPIは以下です。
+## 開発時の起動順
 
-| メソッド | パス | 内容 |
-| --- | --- | --- |
-| GET | `/api/health` | サーバーの動作確認 |
-| GET | `/api/message` | フロントエンド向けのメッセージを返す |
+1. Backendを `http://localhost:8000` で起動する
+2. Frontendを `http://localhost:5173` で起動する
+3. ブラウザで `http://localhost:5173/` を開く
+
+フロントエンドはバックエンドのAPIを直接呼び出しているため、社員一覧を表示するには両方のサーバーを起動しておく必要があります。
 
 ## テスト
 
-バックエンドのテストを実行します。
+Backendのテストを実行します。
 
 ```bash
 cd backend
@@ -77,11 +159,39 @@ source .venv/bin/activate
 pytest
 ```
 
-## ビルド
+## Frontendの確認コマンド
 
-フロントエンドの本番用ビルドを作成します。
+### Lint
+
+```bash
+cd frontend
+npm run lint
+```
+
+### Build
 
 ```bash
 cd frontend
 npm run build
 ```
+
+### Preview
+
+```bash
+cd frontend
+npm run preview
+```
+
+## CORS設定
+
+開発中は、FrontendとBackendが別々のポートで動きます。
+
+```text
+Frontend: http://localhost:5173
+Backend:  http://localhost:8000
+```
+
+そのため、Backendでは以下のオリジンからのアクセスを許可しています。
+
+- `http://localhost:5173`
+- `http://127.0.0.1:5173`
